@@ -1,0 +1,24 @@
+.modal-window{
+	background-color: rgba(0, 0, 0, 0.637);
+	position: absolute;
+width: 100%;
+height: 100%;
+top: 0%;
+right: 0%;
+z-index: 4;
+display: -ms-flexbox;
+display: -webkit-box;
+display: flex;
+-ms-flex-align: center;
+-ms-flex-pack: center;
+-webkit-box-align: center;
+align-items: center;
+-webkit-box-pack: center;
+justify-content: center;
+}
+
+.modal-window div{
+	max-width: 400px;
+	background-color: aliceblue;
+	padding: 5px;
+}
