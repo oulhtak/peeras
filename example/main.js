@@ -1,49 +1,55 @@
 import { createRoom, joinRoom, getRoom } from "./lib/db.js";
 import Peeras from "./lib/peeras_bundle.js";
 
-const peer = new Peeras({
-  onConnecting: () => {
-    console.log("peer connecting");
-  },
-  onFailed: () => console.log("failed"),
-  onConnected: () => {
-    $form.remove();
-    $content.classList.remove("d-none");
-  },
-  onClosed: () => console.log("closed"),
-  onMessage: (message) => {
-    const p = document.createElement("p");
-    p.textContent = message;
-    $messages.appendChild(p);
-  },
-  onUploadProgress: (percentage) => {
-    $uploadProgress.style.width = percentage.toFixed(2) + "%";
-    $uploadProgress.textContent = percentage.toFixed(2) + "%";
-    if (percentage == 100) {
-      success.style.display = "block";
+const peer = new Peeras(
+  {
+    onConnecting: () => {
+      console.log("peer connecting");
+    },
+    onFailed: () => console.log("failed"),
+    onConnected: () => {
+      $form.remove();
+      $content.classList.remove("d-none");
+    },
+    onClosed: () => console.log("closed"),
+    onMessage: (message) => {
+      const p = document.createElement("p");
+      p.textContent = message;
+      $messages.appendChild(p);
+    },
+    onUploadProgress: (percentage) => {
+      $uploadProgress.style.width = percentage.toFixed(2) + "%";
+      $uploadProgress.textContent = percentage.toFixed(2) + "%";
+      if (percentage == 100) {
+        success.style.display = "block";
+        $cancelButton.style.display = "none";
+        $sendFileBtn.style.display = "block";
+        formFile.disabled = false;
+      }
+    },
+    onDownloadProgress: (percentage) => {
+      $downloadProgress.style.width = percentage.toFixed(2) + "%";
+      $downloadProgress.textContent = percentage.toFixed(2) + "%";
+    },
+    onInitializingFileTranferFailed: ({ code, message, name }) => {
+      $warning.textContent = message;
+      $warning.style.display = "block";
       $cancelButton.style.display = "none";
       $sendFileBtn.style.display = "block";
       formFile.disabled = false;
-    }
+    },
+    onFileAbort: () => {
+      $warning.innerHTML =
+        "<strong>Warning!</strong> the user canceled the file";
+      $warning.style.display = "block";
+      $downloadProgress.style.width = "0%";
+      $downloadProgress.textContent = "";
+    },
   },
-  onDownloadProgress: (percentage) => {
-    $downloadProgress.style.width = percentage.toFixed(2) + "%";
-    $downloadProgress.textContent = percentage.toFixed(2) + "%";
-  },
-  onInitializingFileTranferFailed: ({ code, message, name }) => {
-    $warning.textContent = message;
-    $warning.style.display = "block";
-    $cancelButton.style.display = "none";
-    $sendFileBtn.style.display = "block";
-    formFile.disabled = false;
-  },
-  onFileAbort: () => {
-    $warning.innerHTML = "<strong>Warning!</strong> the user canceled the file";
-    $warning.style.display = "block";
-    $downloadProgress.style.width = "0%";
-    $downloadProgress.textContent = "";
-  },
-});
+  {
+    isDevelopment: true,
+  }
+);
 
 $form.onsubmit = async function (e) {
   e.preventDefault();

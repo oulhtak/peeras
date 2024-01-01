@@ -13,7 +13,7 @@ export async function startRead(self, file) {
 }
 
 export async function read(self, incoming) {
-  self.config.onUploadProgress(incoming?.receviedPercentage || 0);
+  self.listeners.onUploadProgress(incoming?.receviedPercentage || 0);
 
   if (!self.localFile.tmpShunk) {
     self.localFile.tmpShunk = await self.localFile.reader.read();
@@ -47,9 +47,8 @@ export async function endRead(self) {
 
 export async function startWrite(self, remoteFile) {
   try {
-    if (self.development) {
-      await sleep(2000);
-    }
+    self.development && (await sleep(2000));
+
     const picker = await window.showSaveFilePicker({
       suggestedName: remoteFile.name,
     });
@@ -91,7 +90,7 @@ export async function write(self, data) {
   self.remoteFile.size = self.remoteFile.stream.size;
   const donwloadPercentage =
     (self.remoteFile.recivedByteLength / self.remoteFile.totalByteSize) * 100;
-  self.config.onDownloadProgress(donwloadPercentage);
+  self.listeners.onDownloadProgress(donwloadPercentage);
   self.channel.send(
     JSON.stringify({
       type: "readyToRecieve",
@@ -108,7 +107,6 @@ export function endWrite(self) {
   self.remoteFile = null;
 }
 
-//utils
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

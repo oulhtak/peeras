@@ -43,9 +43,16 @@
   </style>
   <body>
     <div class="d-flex h-100 bg-light">
-      <div id="$main" style="max-width: 500px" class="m-auto p-5">
+      <div id="$main" style="max-width: 800px" class="m-auto p-5">
         <div class="mb-4">
           <img src="./global_assets/logo.svg" />
+          <p class="form-text">
+            A JavaScript library for real-time file transfer between two browser
+            with out the need of a server by streaming the file chunk by chunk,
+            the reciever browser saves the shunks on the hard drive when even it
+            recieves one in real-time, which means we can send files with huge
+            sizes eliminating limitations associated with browser RAM memory.
+          </p>
           <div class="form-text">
             The Browser compatibility so far are
             <strong>Chrome</strong> ,<strong>Opera</strong> and
@@ -61,15 +68,15 @@
               id="$roomId"
             />
             <div class="form-text">
-              create a room by writting a complexe room id with at least 10
+              Create a room by entering a complex room ID with a minimum of 10
               characters or click
               <strong
                 ><a id="$generateUniqueId" href="javascript:void(0)"
                   >here</a
                 ></strong
               >
-              to generate a random secure one, then share it with the other to
-              join your room
+              to generate a random one. Share your room id with whom you want to
+              join your room.
             </div>
           </div>
           <div class="form-check">

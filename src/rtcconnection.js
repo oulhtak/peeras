@@ -1,14 +1,10 @@
 export class RtcConnection {
-  constructor(config, servers) {
-    // if (!window.RTCPeerConnection) {
-    //   throw Error("your browser does not support RTCPeerConnection");
-    // }
+  constructor(listeners, servers) {
+    if (!window.RTCPeerConnection) {
+      throw Error("your browser does not support WebRTC");
+    }
 
-    // if (!window.showSaveFilePicker) {
-    //   throw Error("your browser does not support showSaveFilePicker");
-    // }
-
-    this.config = config || {};
+    this.listeners = listeners || {};
     this.connection = new RTCPeerConnection(
       servers || {
         iceServers: [
@@ -28,30 +24,26 @@ export class RtcConnection {
       );
       switch (this.connection.connectionState) {
         case "connecting":
-          config.onConnecting();
+          listeners.onConnecting();
           break;
         case "disconnected":
           this.close();
-          this.config.onDisconnected();
+          this.listeners.onDisconnected();
           break;
         case "failed":
-          config.onFailed();
+          listeners.onFailed();
           break;
         case "closed":
-          config.onClosed();
+          listeners.onClosed();
           break;
         case "connected":
-          console.log("connected hahah");
-          // on connected instead of on open
-          console.log("remote streams", this.connection.getRemoteStreams());
-          this.config.onConnected(this.connection.getRemoteStreams());
+          this.listeners.onConnected(this.connection.getRemoteStreams());
           break;
       }
     };
   }
 
   close() {
-    console.log("closing connection");
     this.connection.close();
   }
 }

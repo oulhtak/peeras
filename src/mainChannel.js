@@ -27,7 +27,7 @@ async function handler(self, event) {
   const incoming = JSON.parse(event.data);
   switch (incoming.type) {
     case "message":
-      self.config.onMessage(incoming.data);
+      self.listeners.onMessage(incoming.data);
       break;
     case "initializing":
       startWrite(self, incoming.data);
@@ -37,20 +37,20 @@ async function handler(self, event) {
       break;
     case "initializingFailed":
       endRead(self);
-      self.config.onInitializingFileTranferFailed(incoming.data);
+      self.listeners.onInitializingFileTranferFailed(incoming.data);
       break;
     case "fileStreamAborted":
       endWrite(self);
-      self.config.onFileAbort();
+      self.listeners.onFileAbort();
       break;
     case "fileStreamCompleted":
       endWrite(self);
       break;
     case "mediaStreamStoped":
-      self.config.onRemoteMediaStreamStoped(incoming.data);
+      self.listeners.onRemoteMediaStreamStoped(incoming.data);
       break;
     case "mediaStreamResumed":
-      self.config.onRemoteMediaStreamResumed(incoming.data);
+      self.listeners.onRemoteMediaStreamResumed(incoming.data);
       break;
   }
 }

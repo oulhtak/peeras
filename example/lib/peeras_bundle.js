@@ -1,14 +1,10 @@
 class RtcConnection {
-  constructor(config, servers) {
-    // if (!window.RTCPeerConnection) {
-    //   throw Error("your browser does not support RTCPeerConnection");
-    // }
+  constructor(listeners, servers) {
+    if (!window.RTCPeerConnection) {
+      throw Error("your browser does not support WebRTC");
+    }
 
-    // if (!window.showSaveFilePicker) {
-    //   throw Error("your browser does not support showSaveFilePicker");
-    // }
-
-    this.config = config || {};
+    this.listeners = listeners || {};
     this.connection = new RTCPeerConnection(
       servers || {
         iceServers: [
@@ -28,30 +24,26 @@ class RtcConnection {
       );
       switch (this.connection.connectionState) {
         case "connecting":
-          config.onConnecting();
+          listeners.onConnecting();
           break;
         case "disconnected":
           this.close();
-          this.config.onDisconnected();
+          this.listeners.onDisconnected();
           break;
         case "failed":
-          config.onFailed();
+          listeners.onFailed();
           break;
         case "closed":
-          config.onClosed();
+          listeners.onClosed();
           break;
         case "connected":
-          console.log("connected hahah");
-          // on connected instead of on open
-          console.log("remote streams", this.connection.getRemoteStreams());
-          this.config.onConnected(this.connection.getRemoteStreams());
+          this.listeners.onConnected(this.connection.getRemoteStreams());
           break;
       }
     };
   }
 
   close() {
-    console.log("closing connection");
     this.connection.close();
   }
 }
@@ -70,7 +62,7 @@ async function startRead(self, file) {
 }
 
 async function read(self, incoming) {
-  self.config.onUploadProgress(incoming?.receviedPercentage || 0);
+  self.listeners.onUploadProgress(incoming?.receviedPercentage || 0);
 
   if (!self.localFile.tmpShunk) {
     self.localFile.tmpShunk = await self.localFile.reader.read();
@@ -104,9 +96,8 @@ async function endRead(self) {
 
 async function startWrite(self, remoteFile) {
   try {
-    if (self.development) {
-      await sleep(2000);
-    }
+    self.development && (await sleep(2000));
+
     const picker = await window.showSaveFilePicker({
       suggestedName: remoteFile.name,
     });
@@ -148,7 +139,7 @@ async function write(self, data) {
   self.remoteFile.size = self.remoteFile.stream.size;
   const donwloadPercentage =
     (self.remoteFile.recivedByteLength / self.remoteFile.totalByteSize) * 100;
-  self.config.onDownloadProgress(donwloadPercentage);
+  self.listeners.onDownloadProgress(donwloadPercentage);
   self.channel.send(
     JSON.stringify({
       type: "readyToRecieve",
@@ -165,7 +156,6 @@ function endWrite(self) {
   self.remoteFile = null;
 }
 
-//utils
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -197,7 +187,7 @@ async function handler(self, event) {
   const incoming = JSON.parse(event.data);
   switch (incoming.type) {
     case "message":
-      self.config.onMessage(incoming.data);
+      self.listeners.onMessage(incoming.data);
       break;
     case "initializing":
       startWrite(self, incoming.data);
@@ -207,20 +197,20 @@ async function handler(self, event) {
       break;
     case "initializingFailed":
       endRead(self);
-      self.config.onInitializingFileTranferFailed(incoming.data);
+      self.listeners.onInitializingFileTranferFailed(incoming.data);
       break;
     case "fileStreamAborted":
       endWrite(self);
-      self.config.onFileAbort();
+      self.listeners.onFileAbort();
       break;
     case "fileStreamCompleted":
       endWrite(self);
       break;
     case "mediaStreamStoped":
-      self.config.onRemoteMediaStreamStoped(incoming.data);
+      self.listeners.onRemoteMediaStreamStoped(incoming.data);
       break;
     case "mediaStreamResumed":
-      self.config.onRemoteMediaStreamResumed(incoming.data);
+      self.listeners.onRemoteMediaStreamResumed(incoming.data);
       break;
   }
 }
@@ -272,9 +262,10 @@ function manageStreams(self, streams) {
 }
 
 class Peeras extends RtcConnection {
-  constructor(config, servers) {
-    super(config, servers);
-    this.development = true;
+  constructor(listeners, config = {}) {
+    const { servers, isDevelopment } = config;
+    super(listeners, servers);
+    this.development = !!isDevelopment;
     this.localFile = null;
     this.remoteFile = null;
     this.localMediaStreams = null;
@@ -285,7 +276,7 @@ class Peeras extends RtcConnection {
     return new Promise(async (resolve) => {
       //guard to prevent calling initialize twice
       if (this.connection?.localDescription?.sdp) {
-        throw Error("initialize can only be called once");
+        throw Error("a connection has already been established");
       }
 
       // You must add at least a datachannel before you create an offer
@@ -340,16 +331,6 @@ class Peeras extends RtcConnection {
     });
   }
 
-  checkCallOrAnswerType(callid) {
-    const sdpObject = callid;
-    const video = sdpObject.includes("m=video");
-    const audio = sdpObject.includes("m=audio");
-    return {
-      video,
-      audio,
-    };
-  }
-
   sendMessage(content) {
     if (!this.channel || this.channel.readyState !== "open") {
       throw Error("channel not ready");
@@ -364,7 +345,7 @@ class Peeras extends RtcConnection {
 
   sendFile = async (file) => {
     if (!this.channel || this.channel.readyState !== "open") {
-      throw Error("channel not ready");
+      throw Error("the connection has not been established yet");
     }
 
     if (this.localFile) {

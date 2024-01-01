@@ -4,9 +4,10 @@ import { manageStreams } from "./mediaStream.js";
 import { startRead, endRead } from "./fileStream.js";
 
 export default class Peeras extends RtcConnection {
-  constructor(config, servers) {
-    super(config, servers);
-    this.development = true;
+  constructor(listeners, config = {}) {
+    const { servers, isDevelopment } = config;
+    super(listeners, servers);
+    this.development = !!isDevelopment;
     this.localFile = null;
     this.remoteFile = null;
     this.localMediaStreams = null;
@@ -17,7 +18,7 @@ export default class Peeras extends RtcConnection {
     return new Promise(async (resolve) => {
       //guard to prevent calling initialize twice
       if (this.connection?.localDescription?.sdp) {
-        throw Error("initialize can only be called once");
+        throw Error("a connection has already been established");
       }
 
       // You must add at least a datachannel before you create an offer
@@ -72,16 +73,6 @@ export default class Peeras extends RtcConnection {
     });
   }
 
-  checkCallOrAnswerType(callid) {
-    const sdpObject = callid;
-    const video = sdpObject.includes("m=video");
-    const audio = sdpObject.includes("m=audio");
-    return {
-      video,
-      audio,
-    };
-  }
-
   sendMessage(content) {
     if (!this.channel || this.channel.readyState !== "open") {
       throw Error("channel not ready");
@@ -96,7 +87,7 @@ export default class Peeras extends RtcConnection {
 
   sendFile = async (file) => {
     if (!this.channel || this.channel.readyState !== "open") {
-      throw Error("channel not ready");
+      throw Error("the connection has not been established yet");
     }
 
     if (this.localFile) {
