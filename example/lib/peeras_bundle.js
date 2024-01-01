@@ -333,7 +333,7 @@ class Peeras extends RtcConnection {
 
   sendMessage(content) {
     if (!this.channel || this.channel.readyState !== "open") {
-      throw Error("channel not ready");
+      throw Error("the connection has not been established yet");
     }
     this.channel.send(
       JSON.stringify({
