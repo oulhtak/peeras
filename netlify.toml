@@ -1,0 +1,4 @@
+[[headers]]
+  for = "/lib/peeras_bundle.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
